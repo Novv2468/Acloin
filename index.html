@@ -8,225 +8,339 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* NEON OBSIDIAN THEME */
-        :root {
-            --bg-color: #050505;
-            --card-bg: #121212;
-            --primary: #8b5cf6; /* Violet */
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
-        }
-        body { background-color: var(--bg-color); color: white; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+        /* BASE THEME */
+        :root { --bg: #000000; --card: #141414; --primary: #8b5cf6; }
+        body { background: var(--bg); color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; user-select: none; }
 
+        /* CAROUSEL */
+        .card-stack { position: relative; width: 100%; height: 75vh; perspective: 1000px; margin-top: 10px; }
         .tinder-card {
             position: absolute; width: 100%; height: 100%;
-            background-color: var(--card-bg);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            transition: transform 0.4s ease-out, opacity 0.4s;
-            border: 1px solid #333;
+            background: var(--card); border-radius: 16px; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.3s, opacity 0.3s;
         }
 
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 70px;
-            background: rgba(0,0,0,0.9);
-            border-top: 1px solid #222;
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 50;
+        /* MEDIA CONTROLS */
+        .tap-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; }
+        .left-zone { left: 0; }
+        .right-zone { right: 0; }
+
+        .progress-bar-container {
+            position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 4px; z-index: 20;
         }
-        .nav-btn.active { color: var(--primary); transform: scale(1.1); }
+        .progress-bar { height: 3px; background: rgba(255,255,255,0.3); flex: 1; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
+        .progress-fill.active { width: 100%; }
 
-        .page { display: none; padding: 20px; height: 100vh; overflow-y: auto; padding-bottom: 100px; }
-        .page.active { display: block; animation: fade 0.3s; }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        /* PAGES */
+        .page { display: none; height: 100vh; overflow-y: auto; padding-bottom: 80px; }
+        .page.active { display: block; }
 
-        /* Setup Modal */
-        #setup-modal { backdrop-filter: blur(20px); }
+        /* INPUTS */
+        .input-dark { background: #222; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; width: 100%; margin-bottom: 10px; }
+        .toggle-row { display: flex; justify-content: space-between; padding: 15px; background: #111; border-radius: 10px; margin-bottom: 8px; align-items: center; }
+
+        /* NAV */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 50; }
+        .nav-btn.active { color: var(--primary); }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="fixed inset-0 bg-[#050505] z-50 flex justify-center items-center">
-        <div class="text-violet-500 font-bold text-2xl animate-pulse">Acloin System</div>
+    <script>
+        // ==========================================
+        // ВНИМАНИЕ! ВСТАВЬТЕ ССЫЛКУ NGROK СЮДА:
+        const API_BASE = "https://caselessly-selfrestrained-doreen.ngrok-free.dev"; 
+        // Пример: "https://abcd-123.ngrok-free.app"
+        // ==========================================
+    </script>
+
+    <div id="loader" class="fixed inset-0 bg-black z-50 flex justify-center items-center">
+        <div class="text-violet-500 font-bold animate-pulse">Загрузка V15...</div>
     </div>
 
-    <div id="setup-modal" class="fixed inset-0 bg-black/90 z-40 flex flex-col justify-center items-center p-6 hidden">
-        <div class="bg-[#1a1a1a] p-6 rounded-2xl w-full border border-gray-800">
-            <h2 class="text-xl font-bold mb-2">📡 Соединение</h2>
-            <p class="text-sm text-gray-400 mb-4">Вставь ссылку из Ngrok, чтобы сайт увидел бота.</p>
-            <input type="text" id="api-input" placeholder="https://xxxx.ngrok-free.app" class="w-full p-3 bg-black rounded-lg mb-4 text-white border border-gray-700 focus:border-violet-500 outline-none">
-            <button onclick="saveApi()" class="w-full p-3 bg-violet-600 rounded-lg font-bold shadow-lg shadow-violet-900/50">ПОДКЛЮЧИТЬ</button>
+    <div id="page-search" class="page active px-2">
+        <div class="flex justify-between items-center py-2">
+            <h1 class="text-xl font-bold">Acloin</h1>
+            <button onclick="switchPage('filters')" class="text-gray-400"><i class="fa-solid fa-sliders"></i></button>
+        </div>
+
+        <div id="card-stack" class="card-stack">
+            </div>
+
+        <div class="flex justify-center gap-6 mt-4">
+            <button onclick="vote('dislike')" class="w-14 h-14 rounded-full bg-[#222] text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="vote('like')" class="w-14 h-14 rounded-full bg-[#222] text-green-500 text-2xl"><i class="fa-solid fa-heart"></i></button>
         </div>
     </div>
 
-    <div id="tab-search" class="page active" style="overflow: hidden;">
-        <div class="flex justify-between items-center mb-4">
-            <span class="text-xl font-bold">Acloin</span>
-            <div class="px-2 py-1 rounded bg-violet-500/20 text-violet-300 text-xs font-bold border border-violet-500/30">APP V14</div>
+    <div id="page-profile" class="page px-4 pt-6">
+        <div class="flex flex-col items-center">
+            <img id="my-avatar" src="" class="w-24 h-24 rounded-full object-cover border-2 border-violet-500">
+            <h2 id="my-name" class="text-xl font-bold mt-2">...</h2>
         </div>
 
-        <div class="relative w-full h-[65vh] perspective-1000" id="card-stack">
-            <div class="flex flex-col items-center justify-center h-full text-gray-500">
-                <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                <p>Загрузка анкет...</p>
+        <div class="mt-6">
+            <h3 class="text-gray-500 text-xs font-bold uppercase mb-2 ml-1">Редактирование</h3>
+            <input id="edit-desc" class="input-dark" placeholder="Описание">
+            <input id="edit-style" class="input-dark" placeholder="Стиль">
+            <button onclick="saveProfile()" class="w-full bg-violet-700 p-3 rounded-lg font-bold mb-6">Сохранить</button>
+
+            <h3 class="text-gray-500 text-xs font-bold uppercase mb-2 ml-1">Настройки</h3>
+            <div class="toggle-row">
+                <span>Анонимный чат</span>
+                <input type="checkbox" id="sett-anon" onchange="saveSetting('anon_chat_enabled', this.checked)">
+            </div>
+            <div class="toggle-row">
+                <span>Разрешить сообщения</span>
+                <input type="checkbox" id="sett-msg" onchange="saveSetting('allow_anon_messages', this.checked)">
             </div>
         </div>
-
-        <div class="flex justify-center items-center gap-6 mt-6">
-            <button onclick="vote('dislike')" class="w-14 h-14 rounded-full bg-[#1a1a1a] text-red-500 text-2xl border border-red-900/30 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-            <button onclick="vote('like')" class="w-14 h-14 rounded-full bg-[#1a1a1a] text-green-500 text-2xl border border-green-900/30 flex items-center justify-center"><i class="fa-solid fa-heart"></i></button>
-        </div>
     </div>
 
-    <div id="tab-profile" class="page">
-        <div class="flex flex-col items-center pt-6">
-            <img id="my-avatar" src="" class="w-28 h-28 rounded-full object-cover border-4 border-[#050505] mb-3 bg-gray-800">
-            <h1 id="my-name" class="text-2xl font-bold">Загрузка...</h1>
-            <p id="my-info" class="text-gray-500 text-sm">...</p>
+    <div id="page-filters" class="page px-4 pt-6">
+        <h2 class="text-xl font-bold mb-4">Фильтры поиска</h2>
 
-            <div class="w-full mt-8 space-y-3">
-                <div class="p-4 bg-[#111] rounded-xl border border-gray-800 flex justify-between items-center" onclick="tg.close()">
-                    <span>⬅️ Вернуться в бота</span>
-                </div>
-                <div class="p-4 bg-[#111] rounded-xl border border-gray-800 flex justify-between items-center text-red-400" onclick="resetApi()">
-                    <span>🔌 Сбросить сервер</span>
-                </div>
-            </div>
+        <label class="block text-sm text-gray-400 mb-1">Возраст</label>
+        <div class="flex gap-2 mb-4">
+            <input id="filter-min" type="number" class="input-dark" placeholder="От">
+            <input id="filter-max" type="number" class="input-dark" placeholder="До">
         </div>
+
+        <label class="block text-sm text-gray-400 mb-1">Пол</label>
+        <select id="filter-gender" class="input-dark">
+            <option value="all">Всех</option>
+            <option value="male">Парней</option>
+            <option value="female">Девушек</option>
+        </select>
+
+        <button onclick="saveFilters()" class="w-full bg-white text-black p-3 rounded-lg font-bold mt-4">Применить</button>
+        <button onclick="switchPage('search')" class="w-full text-gray-500 p-3 mt-2">Отмена</button>
+    </div>
+
+    <div id="page-chat" class="page px-2 pt-4">
+        <h2 class="text-xl font-bold mb-4">Диалоги</h2>
+        <div id="chats-list" class="space-y-2">
+            </div>
     </div>
 
     <div class="nav-bar">
-        <button onclick="switchTab('profile')" id="btn-profile" class="text-gray-500 flex flex-col items-center p-2"><i class="fa-regular fa-user text-xl"></i></button>
-        <button onclick="switchTab('search')" id="btn-search" class="text-violet-500 flex flex-col items-center p-2"><div class="w-12 h-12 bg-violet-600 rounded-full flex items-center justify-center -mt-6 border-4 border-[#050505] shadow-lg shadow-violet-900/50"><i class="fa-solid fa-fire text-white"></i></div></button>
-        <button id="btn-chat" class="text-gray-500 flex flex-col items-center p-2 opacity-50"><i class="fa-regular fa-comment text-xl"></i></button>
+        <button onclick="switchPage('profile')" id="nav-profile" class="text-gray-500"><i class="fa-regular fa-user text-xl"></i></button>
+        <button onclick="switchPage('search')" id="nav-search" class="text-violet-500"><i class="fa-solid fa-fire text-2xl"></i></button>
+        <button onclick="switchPage('chat')" id="nav-chat" class="text-gray-500"><i class="fa-regular fa-comment text-xl"></i></button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand();
         const user = tg.initDataUnsafe.user;
-        let API = localStorage.getItem('acloin_api');
+
+        // STATE
         let profiles = [];
         let currentIdx = 0;
+        let mediaIdx = 0; // Для карусели
+        let myData = {};
 
-        function init() {
-            if(!API) {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('setup-modal').classList.remove('hidden');
-            } else {
-                document.getElementById('loader').style.display = 'none';
-                loadMe();
-                loadFeed();
-            }
-        }
+        // INITIALIZATION
+        async function init() {
+            if(!user) return; // Тест в браузере без ТГ
 
-        function saveApi() {
-            let val = document.getElementById('api-input').value.trim();
-            if(val) {
-                if(val.endsWith('/')) val = val.slice(0, -1);
-                localStorage.setItem('acloin_api', val);
-                API = val;
-                document.getElementById('setup-modal').classList.add('hidden');
-                init();
-            }
-        }
-
-        function resetApi() {
-            localStorage.removeItem('acloin_api');
-            location.reload();
-        }
-
-        async function loadMe() {
-            if(!user) return;
+            // 1. Загружаем меня
             try {
-                const res = await fetch(`${API}/api/me`, {
-                    method: 'POST', 
-                    body: JSON.stringify({tg_id: user.id})
-                });
-                const data = await res.json();
-                if(data.user) {
-                    document.getElementById('my-name').innerText = data.user.name + ", " + data.user.age;
-                    document.getElementById('my-info').innerText = data.user.city;
-                    if(data.user.avatar_url) document.getElementById('my-avatar').src = data.user.avatar_url;
+                const res = await fetch(`${API_BASE}/api/me`, { method: 'POST', body: JSON.stringify({tg_id: user.id}) });
+                const d = await res.json();
+                if(d.user) {
+                    myData = d.user;
+                    fillProfileInputs();
                 }
-            } catch(e) { console.log(e); }
+            } catch(e) { console.error(e); }
+
+            // 2. Загружаем ленту
+            loadFeed();
+            document.getElementById('loader').style.display = 'none';
         }
 
         async function loadFeed() {
-            if(!user) return;
             try {
-                const res = await fetch(`${API}/api/feed`, {
-                    method: 'POST',
-                    body: JSON.stringify({tg_id: user.id})
-                });
-                const data = await res.json();
-                if(data.profiles) {
-                    profiles = data.profiles;
+                const res = await fetch(`${API_BASE}/api/feed`, { method: 'POST', body: JSON.stringify({tg_id: user.id}) });
+                const d = await res.json();
+                if(d.profiles) {
+                    profiles = d.profiles;
                     currentIdx = 0;
                     renderCard();
                 }
-            } catch(e) {
-                document.getElementById('card-stack').innerHTML = `<div class='text-center text-red-500 mt-20'>Ошибка связи.<br>Проверь Ngrok.</div>`;
+            } catch(e) { 
+                document.getElementById('card-stack').innerHTML = `<div class='text-center mt-20 text-red-500'>Ошибка сети. Проверь ссылку.</div>`;
             }
         }
 
+        // --- RENDER CARD & CAROUSEL ---
         function renderCard() {
             const stack = document.getElementById('card-stack');
             stack.innerHTML = '';
 
             if(currentIdx >= profiles.length) {
-                stack.innerHTML = `<div class='flex flex-col items-center justify-center h-full text-gray-500'><p>Анкеты закончились :(</p><button class='mt-4 px-4 py-2 bg-[#222] rounded' onclick='loadFeed()'>Обновить</button></div>`;
+                stack.innerHTML = `<div class='flex flex-col items-center justify-center h-full text-gray-500'><p>Анкеты кончились</p><button class='mt-4 bg-[#222] px-4 py-2 rounded' onclick='loadFeed()'>Обновить</button></div>`;
                 return;
             }
 
             const p = profiles[currentIdx];
-            const img = p.avatar_url || 'https://via.placeholder.com/400x600?text=No+Photo';
+            mediaIdx = 0; // Reset carousel
 
-            stack.innerHTML = `
-                <div class="tinder-card" style="background-image: url('${img}'); background-size: cover;">
-                    <div class="absolute bottom-0 w-full p-6 bg-gradient-to-t from-black via-black/80 to-transparent">
-                        <h2 class="text-3xl font-bold text-white mb-1">${p.name}, ${p.age}</h2>
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="bg-violet-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${p.style}</span>
-                            <span class="text-gray-300 text-sm"><i class="fa-solid fa-location-dot"></i> ${p.city}</span>
-                        </div>
-                        ${p.description ? `<p class="text-gray-400 text-xs line-clamp-2">${p.description}</p>` : ''}
+            const card = document.createElement('div');
+            card.className = 'tinder-card';
+
+            // Generate progress bars
+            let progressHTML = '';
+            const mediaCount = p.media_content.length;
+            for(let i=0; i<mediaCount; i++) progressHTML += `<div class="progress-bar"><div class="progress-fill" id="prog-${i}"></div></div>`;
+
+            card.innerHTML = `
+                <div class="progress-bar-container">${progressHTML}</div>
+                <div class="tap-zone left-zone" onclick="prevMedia(event)"></div>
+                <div class="tap-zone right-zone" onclick="nextMedia(event)"></div>
+
+                <div id="media-display" class="w-full h-full bg-black relative flex items-center justify-center"></div>
+
+                <div class="absolute bottom-0 w-full p-5 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none">
+                    <h2 class="text-3xl font-bold">${p.name}, ${p.age}</h2>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="bg-violet-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">${p.style}</span>
+                        ${p.city ? `<span class="text-gray-300 text-sm"><i class="fa-solid fa-location-dot"></i> ${p.city}</span>` : ''}
                     </div>
-                </div>`;
+                    ${p.description ? `<p class="text-gray-300 text-sm line-clamp-2">${p.description}</p>` : ''}
+                    ${p.music_url ? `<div class="mt-2 flex items-center gap-2 bg-white/10 p-2 rounded-lg"><i class="fa-solid fa-music text-violet-400"></i> <span class="text-xs truncate max-w-[150px]">${p.music_text || 'Music'}</span> <audio src="${p.music_url}" controls class="h-6 w-20"></audio></div>` : ''}
+                </div>
+            `;
+
+            stack.appendChild(card);
+            showMedia();
         }
+
+        function showMedia() {
+            const p = profiles[currentIdx];
+            const m = p.media_content[mediaIdx];
+            const container = document.getElementById('media-display');
+
+            let html = '';
+            if(m.type === 'photo') {
+                html = `<img src="${m.url}" class="w-full h-full object-cover">`;
+            } else if(m.type === 'video' || m.type === 'video_note') {
+                html = `<video src="${m.url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
+            } else if(m.type === 'voice') {
+                html = `<div class="flex flex-col items-center"><i class="fa-solid fa-microphone-lines text-6xl mb-4 text-violet-500"></i><audio src="${m.url}" controls></audio></div>`;
+            }
+
+            container.innerHTML = html;
+
+            // Update bars
+            for(let i=0; i<p.media_content.length; i++) {
+                document.getElementById(`prog-${i}`).className = (i === mediaIdx) ? 'progress-fill active' : 'progress-fill';
+                if(i < mediaIdx) document.getElementById(`prog-${i}`).style.width = '100%';
+                if(i > mediaIdx) document.getElementById(`prog-${i}`).style.width = '0%';
+            }
+        }
+
+        window.prevMedia = (e) => { e.stopPropagation(); if(mediaIdx > 0) { mediaIdx--; showMedia(); } }
+        window.nextMedia = (e) => { e.stopPropagation(); if(mediaIdx < profiles[currentIdx].media_content.length - 1) { mediaIdx++; showMedia(); } }
 
         async function vote(action) {
             const card = document.querySelector('.tinder-card');
-            if(!card) return;
-            const p = profiles[currentIdx];
-
-            // Animation
             const x = action === 'like' ? 200 : -200;
-            const rot = action === 'like' ? 15 : -15;
-            card.style.transform = `translateX(${x}%) rotate(${rot}deg)`;
-            card.style.opacity = '0';
+            card.style.transform = `translateX(${x}%) rotate(${x/15}deg)`;
+            card.style.opacity = 0;
 
-            // API
             try {
-                await fetch(`${API}/api/action`, {
+                await fetch(`${API_BASE}/api/action`, {
                     method: 'POST',
-                    body: JSON.stringify({from_id: user.id, to_id: p.tg_id, action: action})
+                    body: JSON.stringify({from_id: user.id, to_id: profiles[currentIdx].tg_id, action: action})
                 });
             } catch(e) {}
 
-            setTimeout(() => {
-                currentIdx++;
-                renderCard();
-            }, 300);
+            setTimeout(() => { currentIdx++; renderCard(); }, 300);
         }
 
-        function switchTab(id) {
-            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + id).classList.add('active');
+        // --- PROFILE & FILTERS LOGIC ---
+        function fillProfileInputs() {
+            document.getElementById('my-name').innerText = myData.name;
+            document.getElementById('my-avatar').src = myData.avatar_url;
+            document.getElementById('edit-desc').value = myData.description || '';
+            document.getElementById('edit-style').value = myData.style || '';
+            document.getElementById('sett-anon').checked = !!myData.anon_chat_enabled;
 
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            if(id !== 'search') document.getElementById('btn-' + id).classList.add('active');
+            // Filters
+            document.getElementById('filter-min').value = myData.search_age_min || 18;
+            document.getElementById('filter-max').value = myData.search_age_max || 25;
+            document.getElementById('filter-gender').value = myData.search_gender || 'all';
+        }
+
+        async function saveProfile() {
+            const updates = {
+                description: document.getElementById('edit-desc').value,
+                style: document.getElementById('edit-style').value
+            };
+            await sendUpdate(updates);
+            alert('Сохранено');
+        }
+
+        async function saveFilters() {
+            const updates = {
+                search_age_min: parseInt(document.getElementById('filter-min').value),
+                search_age_max: parseInt(document.getElementById('filter-max').value),
+                search_gender: document.getElementById('filter-gender').value
+            };
+            await sendUpdate(updates);
+            switchPage('search');
+            loadFeed(); // Reload with new filters
+        }
+
+        async function saveSetting(key, val) {
+            let obj = {}; obj[key] = val;
+            await sendUpdate(obj);
+        }
+
+        async function sendUpdate(fields) {
+            await fetch(`${API_BASE}/api/update`, {
+                method: 'POST',
+                body: JSON.stringify({tg_id: user.id, fields: fields})
+            });
+        }
+
+        // --- CHATS ---
+        async function loadChats() {
+            const c = document.getElementById('chats-list');
+            c.innerHTML = '<div class="text-center text-gray-500">Загрузка...</div>';
+            try {
+                const res = await fetch(`${API_BASE}/api/chats`, { method: 'POST', body: JSON.stringify({tg_id: user.id}) });
+                const d = await res.json();
+                c.innerHTML = '';
+                if(d.chats && d.chats.length > 0) {
+                    d.chats.forEach(chat => {
+                        c.innerHTML += `
+                            <div class="bg-[#1a1a1a] p-3 rounded-lg flex items-center gap-3">
+                                <div class="w-10 h-10 bg-violet-500 rounded-full flex items-center justify-center font-bold">${chat.name[0]}</div>
+                                <div>
+                                    <div class="font-bold">${chat.name}, ${chat.age}</div>
+                                    <div class="text-xs text-green-500">Активный диалог</div>
+                                </div>
+                                <button class="ml-auto bg-violet-600 px-3 py-1 rounded text-xs" onclick="tg.close()">В бота</button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    c.innerHTML = '<div class="text-center text-gray-500 mt-10">Нет активных диалогов</div>';
+                }
+            } catch(e) { c.innerHTML = 'Error'; }
+        }
+
+        // --- NAV ---
+        function switchPage(id) {
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+            document.getElementById('page-' + id).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); // Reset icon colors if needed
+
+            if(id === 'chat') loadChats();
         }
 
         init();
