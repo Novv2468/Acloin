@@ -8,12 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* BASE THEME */
         :root { --bg: #000000; --card: #141414; --primary: #8b5cf6; }
         body { background: var(--bg); color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; user-select: none; }
 
-        /* CAROUSEL */
-        .card-stack { position: relative; width: 100%; height: 75vh; perspective: 1000px; margin-top: 10px; }
+        .card-stack { position: relative; width: 100%; height: 78vh; perspective: 1000px; margin-top: 5px; }
         .tinder-card {
             position: absolute; width: 100%; height: 100%;
             background: var(--card); border-radius: 16px; overflow: hidden;
@@ -21,328 +19,212 @@
             transition: transform 0.3s, opacity 0.3s;
         }
 
-        /* MEDIA CONTROLS */
-        .tap-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; }
+        .tap-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 20; }
         .left-zone { left: 0; }
         .right-zone { right: 0; }
 
-        .progress-bar-container {
-            position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 4px; z-index: 20;
+        .control-btn {
+            position: absolute; top: 20px; z-index: 50;
+            background: rgba(0,0,0,0.5); border-radius: 50%; width: 40px; height: 40px;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px); pointer-events: auto;
         }
+        .sound-btn { right: 20px; }
+        .report-btn { left: 20px; }
+
+        .progress-bar-container { position: absolute; top: 8px; left: 10px; right: 10px; display: flex; gap: 4px; z-index: 30; }
         .progress-bar { height: 3px; background: rgba(255,255,255,0.3); flex: 1; border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
         .progress-fill.active { width: 100%; }
 
-        /* PAGES */
         .page { display: none; height: 100vh; overflow-y: auto; padding-bottom: 80px; }
         .page.active { display: block; }
 
-        /* INPUTS */
         .input-dark { background: #222; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; width: 100%; margin-bottom: 10px; }
         .toggle-row { display: flex; justify-content: space-between; padding: 15px; background: #111; border-radius: 10px; margin-bottom: 8px; align-items: center; }
 
-        /* NAV */
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 50; }
         .nav-btn.active { color: var(--primary); }
+
+        .voice-bubble {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            padding: 20px; border-radius: 20px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+        .voice-wave { font-size: 24px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
     </style>
 </head>
 <body>
-
-    <script>
-        // ==========================================
-        // ВНИМАНИЕ! ВСТАВЬТЕ ССЫЛКУ NGROK СЮДА:
-        const API_BASE = "https://caselessly-selfrestrained-doreen.ngrok-free.dev"; 
-        // Пример: "https://abcd-123.ngrok-free.app"
-        // ==========================================
-    </script>
-
     <div id="loader" class="fixed inset-0 bg-black z-50 flex justify-center items-center">
-        <div class="text-violet-500 font-bold animate-pulse">Загрузка V15...</div>
+        <div class="text-violet-500 font-bold animate-pulse">Загрузка V16...</div>
     </div>
-
     <div id="page-search" class="page active px-2">
-        <div class="flex justify-between items-center py-2">
+        <div class="flex justify-between items-center py-2 relative z-50">
             <h1 class="text-xl font-bold">Acloin</h1>
             <button onclick="switchPage('filters')" class="text-gray-400"><i class="fa-solid fa-sliders"></i></button>
         </div>
-
-        <div id="card-stack" class="card-stack">
-            </div>
-
-        <div class="flex justify-center gap-6 mt-4">
+        <div id="card-stack" class="card-stack"></div>
+        <div class="flex justify-center gap-6 mt-4 relative z-50">
             <button onclick="vote('dislike')" class="w-14 h-14 rounded-full bg-[#222] text-red-500 text-2xl"><i class="fa-solid fa-xmark"></i></button>
             <button onclick="vote('like')" class="w-14 h-14 rounded-full bg-[#222] text-green-500 text-2xl"><i class="fa-solid fa-heart"></i></button>
         </div>
     </div>
-
     <div id="page-profile" class="page px-4 pt-6">
         <div class="flex flex-col items-center">
             <img id="my-avatar" src="" class="w-24 h-24 rounded-full object-cover border-2 border-violet-500">
             <h2 id="my-name" class="text-xl font-bold mt-2">...</h2>
         </div>
-
         <div class="mt-6">
+            <div class="bg-gradient-to-r from-violet-900 to-fuchsia-900 p-4 rounded-xl mb-6 text-center" onclick="copyRef()">
+                <p class="font-bold text-sm mb-1">🎁 Пригласи друзей</p>
+                <p class="text-xs text-gray-300">Нажми, чтобы скопировать ссылку</p>
+            </div>
             <h3 class="text-gray-500 text-xs font-bold uppercase mb-2 ml-1">Редактирование</h3>
             <input id="edit-desc" class="input-dark" placeholder="Описание">
             <input id="edit-style" class="input-dark" placeholder="Стиль">
             <button onclick="saveProfile()" class="w-full bg-violet-700 p-3 rounded-lg font-bold mb-6">Сохранить</button>
-
             <h3 class="text-gray-500 text-xs font-bold uppercase mb-2 ml-1">Настройки</h3>
-            <div class="toggle-row">
-                <span>Анонимный чат</span>
-                <input type="checkbox" id="sett-anon" onchange="saveSetting('anon_chat_enabled', this.checked)">
-            </div>
-            <div class="toggle-row">
-                <span>Разрешить сообщения</span>
-                <input type="checkbox" id="sett-msg" onchange="saveSetting('allow_anon_messages', this.checked)">
-            </div>
+            <div class="toggle-row"><span>Анонимный чат</span><input type="checkbox" id="sett-anon" onchange="saveSetting('anon_chat_enabled', this.checked)"></div>
+            <div class="toggle-row"><span>Разрешить сообщения</span><input type="checkbox" id="sett-msg" onchange="saveSetting('allow_anon_messages', this.checked)"></div>
         </div>
     </div>
-
     <div id="page-filters" class="page px-4 pt-6">
-        <h2 class="text-xl font-bold mb-4">Фильтры поиска</h2>
-
+        <h2 class="text-xl font-bold mb-4">Фильтры</h2>
         <label class="block text-sm text-gray-400 mb-1">Возраст</label>
-        <div class="flex gap-2 mb-4">
-            <input id="filter-min" type="number" class="input-dark" placeholder="От">
-            <input id="filter-max" type="number" class="input-dark" placeholder="До">
-        </div>
-
+        <div class="flex gap-2 mb-4"><input id="filter-min" type="number" class="input-dark" placeholder="От"><input id="filter-max" type="number" class="input-dark" placeholder="До"></div>
         <label class="block text-sm text-gray-400 mb-1">Пол</label>
-        <select id="filter-gender" class="input-dark">
-            <option value="all">Всех</option>
-            <option value="male">Парней</option>
-            <option value="female">Девушек</option>
-        </select>
-
+        <select id="filter-gender" class="input-dark"><option value="all">Всех</option><option value="male">Парней</option><option value="female">Девушек</option></select>
         <button onclick="saveFilters()" class="w-full bg-white text-black p-3 rounded-lg font-bold mt-4">Применить</button>
         <button onclick="switchPage('search')" class="w-full text-gray-500 p-3 mt-2">Отмена</button>
     </div>
-
     <div id="page-chat" class="page px-2 pt-4">
         <h2 class="text-xl font-bold mb-4">Диалоги</h2>
-        <div id="chats-list" class="space-y-2">
-            </div>
+        <div id="chats-list" class="space-y-2"></div>
     </div>
-
     <div class="nav-bar">
         <button onclick="switchPage('profile')" id="nav-profile" class="text-gray-500"><i class="fa-regular fa-user text-xl"></i></button>
         <button onclick="switchPage('search')" id="nav-search" class="text-violet-500"><i class="fa-solid fa-fire text-2xl"></i></button>
         <button onclick="switchPage('chat')" id="nav-chat" class="text-gray-500"><i class="fa-regular fa-comment text-xl"></i></button>
     </div>
-
     <script>
         const tg = window.Telegram.WebApp; tg.expand();
         const user = tg.initDataUnsafe.user;
-
-        // STATE
         let profiles = [];
         let currentIdx = 0;
-        let mediaIdx = 0; // Для карусели
+        let mediaIdx = 0;
         let myData = {};
+        let isMuted = true; 
 
-        // INITIALIZATION
+        // АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ ССЫЛКИ (API ТЕПЕРЬ ОТНОСИТЕЛЬНЫЙ)
+        const API_BASE = ""; 
+
         async function init() {
-            if(!user) return; // Тест в браузере без ТГ
-
-            // 1. Загружаем меня
+            if(!user) return;
             try {
                 const res = await fetch(`${API_BASE}/api/me`, { method: 'POST', body: JSON.stringify({tg_id: user.id}) });
                 const d = await res.json();
-                if(d.user) {
-                    myData = d.user;
-                    fillProfileInputs();
-                }
-            } catch(e) { console.error(e); }
-
-            // 2. Загружаем ленту
+                if(d.user) { myData = d.user; fillProfileInputs(); }
+            } catch(e) {}
             loadFeed();
             document.getElementById('loader').style.display = 'none';
         }
-
         async function loadFeed() {
             try {
                 const res = await fetch(`${API_BASE}/api/feed`, { method: 'POST', body: JSON.stringify({tg_id: user.id}) });
                 const d = await res.json();
-                if(d.profiles) {
-                    profiles = d.profiles;
-                    currentIdx = 0;
-                    renderCard();
-                }
-            } catch(e) { 
-                document.getElementById('card-stack').innerHTML = `<div class='text-center mt-20 text-red-500'>Ошибка сети. Проверь ссылку.</div>`;
-            }
+                if(d.profiles) { profiles = d.profiles; currentIdx = 0; renderCard(); }
+            } catch(e) { document.getElementById('card-stack').innerHTML = `<div class='text-center mt-20 text-red-500'>Ошибка сети</div>`; }
         }
-
-        // --- RENDER CARD & CAROUSEL ---
         function renderCard() {
             const stack = document.getElementById('card-stack');
             stack.innerHTML = '';
-
-            if(currentIdx >= profiles.length) {
-                stack.innerHTML = `<div class='flex flex-col items-center justify-center h-full text-gray-500'><p>Анкеты кончились</p><button class='mt-4 bg-[#222] px-4 py-2 rounded' onclick='loadFeed()'>Обновить</button></div>`;
-                return;
-            }
-
+            if(currentIdx >= profiles.length) { stack.innerHTML = `<div class='flex flex-col items-center justify-center h-full text-gray-500'><p>Пусто...</p><button class='mt-4 bg-[#222] px-4 py-2 rounded' onclick='loadFeed()'>Обновить</button></div>`; return; }
             const p = profiles[currentIdx];
-            mediaIdx = 0; // Reset carousel
-
+            mediaIdx = 0;
             const card = document.createElement('div');
             card.className = 'tinder-card';
-
-            // Generate progress bars
             let progressHTML = '';
-            const mediaCount = p.media_content.length;
-            for(let i=0; i<mediaCount; i++) progressHTML += `<div class="progress-bar"><div class="progress-fill" id="prog-${i}"></div></div>`;
-
+            for(let i=0; i<p.media_content.length; i++) progressHTML += `<div class="progress-bar"><div class="progress-fill" id="prog-${i}"></div></div>`;
             card.innerHTML = `
                 <div class="progress-bar-container">${progressHTML}</div>
                 <div class="tap-zone left-zone" onclick="prevMedia(event)"></div>
                 <div class="tap-zone right-zone" onclick="nextMedia(event)"></div>
-
+                <button class="control-btn sound-btn" onclick="toggleMute(event)" id="sound-toggle"><i class="fa-solid fa-volume-xmark text-white" id="sound-icon"></i></button>
+                <button class="control-btn report-btn text-red-500" onclick="reportUser(event)"><i class="fa-solid fa-flag"></i></button>
                 <div id="media-display" class="w-full h-full bg-black relative flex items-center justify-center"></div>
-
-                <div class="absolute bottom-0 w-full p-5 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none">
+                <div class="absolute bottom-0 w-full p-5 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-40">
                     <h2 class="text-3xl font-bold">${p.name}, ${p.age}</h2>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="bg-violet-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">${p.style}</span>
-                        ${p.city ? `<span class="text-gray-300 text-sm"><i class="fa-solid fa-location-dot"></i> ${p.city}</span>` : ''}
-                    </div>
+                    <div class="flex items-center gap-2 mb-2"><span class="bg-violet-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">${p.style}</span>${p.city ? `<span class="text-gray-300 text-sm"><i class="fa-solid fa-location-dot"></i> ${p.city}</span>` : ''}</div>
                     ${p.description ? `<p class="text-gray-300 text-sm line-clamp-2">${p.description}</p>` : ''}
-                    ${p.music_url ? `<div class="mt-2 flex items-center gap-2 bg-white/10 p-2 rounded-lg"><i class="fa-solid fa-music text-violet-400"></i> <span class="text-xs truncate max-w-[150px]">${p.music_text || 'Music'}</span> <audio src="${p.music_url}" controls class="h-6 w-20"></audio></div>` : ''}
-                </div>
-            `;
-
+                    ${p.music_url ? `<div class="mt-3 pointer-events-auto"><div class="bg-white/10 p-2 rounded-xl flex items-center gap-3 backdrop-blur-md"><div class="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center"><i class="fa-solid fa-music"></i></div><div class="flex-1 overflow-hidden"><p class="text-xs font-bold truncate">${p.music_text || 'Music'}</p></div><audio src="${p.music_url}" controls class="h-6 w-24"></audio></div></div>` : ''}
+                </div>`;
             stack.appendChild(card);
             showMedia();
         }
-
         function showMedia() {
             const p = profiles[currentIdx];
             const m = p.media_content[mediaIdx];
             const container = document.getElementById('media-display');
-
+            const soundBtn = document.getElementById('sound-toggle');
             let html = '';
-            if(m.type === 'photo') {
-                html = `<img src="${m.url}" class="w-full h-full object-cover">`;
-            } else if(m.type === 'video' || m.type === 'video_note') {
-                html = `<video src="${m.url}" autoplay loop muted playsinline class="w-full h-full object-cover"></video>`;
-            } else if(m.type === 'voice') {
-                html = `<div class="flex flex-col items-center"><i class="fa-solid fa-microphone-lines text-6xl mb-4 text-violet-500"></i><audio src="${m.url}" controls></audio></div>`;
-            }
-
+            let showSound = false;
+            if(m.type === 'photo') { html = `<img src="${m.url}" class="w-full h-full object-cover">`; }
+            else if(m.type === 'video') { html = `<video id="main-video" src="${m.url}" autoplay loop ${isMuted ? 'muted' : ''} playsinline class="w-full h-full object-cover"></video>`; showSound = true; }
+            else if(m.type === 'video_note') { html = `<video id="main-video" src="${m.url}" autoplay loop ${isMuted ? 'muted' : ''} playsinline class="w-full h-full object-contain bg-black/50"></video>`; showSound = true; }
+            else if(m.type === 'voice') { html = `<div class="voice-bubble"><div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-violet-600"><i class="fa-solid fa-play"></i></div><div><p class="font-bold text-sm">Голосовое</p><i class="fa-solid fa-lines-leaning voice-wave"></i></div><audio src="${m.url}" controls class="absolute opacity-0 inset-0 w-full h-full z-50 cursor-pointer"></audio></div>`; }
             container.innerHTML = html;
-
-            // Update bars
+            soundBtn.style.display = showSound ? 'flex' : 'none';
+            updateSoundIcon();
             for(let i=0; i<p.media_content.length; i++) {
-                document.getElementById(`prog-${i}`).className = (i === mediaIdx) ? 'progress-fill active' : 'progress-fill';
-                if(i < mediaIdx) document.getElementById(`prog-${i}`).style.width = '100%';
-                if(i > mediaIdx) document.getElementById(`prog-${i}`).style.width = '0%';
+                const bar = document.getElementById(`prog-${i}`);
+                if(bar) { bar.className = (i === mediaIdx) ? 'progress-fill active' : 'progress-fill'; bar.style.width = (i < mediaIdx) ? '100%' : (i === mediaIdx ? '100%' : '0%'); }
             }
         }
-
+        function toggleMute(e) { e.stopPropagation(); isMuted = !isMuted; const vid = document.getElementById('main-video'); if(vid) vid.muted = isMuted; updateSoundIcon(); }
+        function updateSoundIcon() { const icon = document.getElementById('sound-icon'); if(icon) icon.className = isMuted ? "fa-solid fa-volume-xmark text-white" : "fa-solid fa-volume-high text-violet-400"; }
+        async function reportUser(e) { e.stopPropagation(); if(!confirm("Пожаловаться на пользователя?")) return; try { await fetch(`${API_BASE}/api/report`, { method: 'POST', body: JSON.stringify({from_id: user.id, to_id: profiles[currentIdx].tg_id, reason: "Web Report"}) }); alert("Жалоба отправлена"); vote('dislike'); } catch(e) {} }
+        function copyRef() { if(myData.ref_link) { navigator.clipboard.writeText(myData.ref_link); alert("Ссылка скопирована: " + myData.ref_link); } }
         window.prevMedia = (e) => { e.stopPropagation(); if(mediaIdx > 0) { mediaIdx--; showMedia(); } }
         window.nextMedia = (e) => { e.stopPropagation(); if(mediaIdx < profiles[currentIdx].media_content.length - 1) { mediaIdx++; showMedia(); } }
-
         async function vote(action) {
             const card = document.querySelector('.tinder-card');
             const x = action === 'like' ? 200 : -200;
             card.style.transform = `translateX(${x}%) rotate(${x/15}deg)`;
             card.style.opacity = 0;
-
-            try {
-                await fetch(`${API_BASE}/api/action`, {
-                    method: 'POST',
-                    body: JSON.stringify({from_id: user.id, to_id: profiles[currentIdx].tg_id, action: action})
-                });
-            } catch(e) {}
-
+            try { await fetch(`${API_BASE}/api/action`, { method: 'POST', body: JSON.stringify({from_id: user.id, to_id: profiles[currentIdx].tg_id, action: action}) }); } catch(e) {}
             setTimeout(() => { currentIdx++; renderCard(); }, 300);
         }
-
-        // --- PROFILE & FILTERS LOGIC ---
         function fillProfileInputs() {
             document.getElementById('my-name').innerText = myData.name;
-            document.getElementById('my-avatar').src = myData.avatar_url;
+            if(myData.avatar_url) document.getElementById('my-avatar').src = myData.avatar_url;
             document.getElementById('edit-desc').value = myData.description || '';
             document.getElementById('edit-style').value = myData.style || '';
             document.getElementById('sett-anon').checked = !!myData.anon_chat_enabled;
-
-            // Filters
             document.getElementById('filter-min').value = myData.search_age_min || 18;
-            document.getElementById('filter-max').value = myData.search_age_max || 25;
+            document.getElementById('filter-max').value = myData.search_age_max || 99;
             document.getElementById('filter-gender').value = myData.search_gender || 'all';
         }
-
-        async function saveProfile() {
-            const updates = {
-                description: document.getElementById('edit-desc').value,
-                style: document.getElementById('edit-style').value
-            };
-            await sendUpdate(updates);
-            alert('Сохранено');
-        }
-
-        async function saveFilters() {
-            const updates = {
-                search_age_min: parseInt(document.getElementById('filter-min').value),
-                search_age_max: parseInt(document.getElementById('filter-max').value),
-                search_gender: document.getElementById('filter-gender').value
-            };
-            await sendUpdate(updates);
-            switchPage('search');
-            loadFeed(); // Reload with new filters
-        }
-
-        async function saveSetting(key, val) {
-            let obj = {}; obj[key] = val;
-            await sendUpdate(obj);
-        }
-
-        async function sendUpdate(fields) {
-            await fetch(`${API_BASE}/api/update`, {
-                method: 'POST',
-                body: JSON.stringify({tg_id: user.id, fields: fields})
-            });
-        }
-
-        // --- CHATS ---
+        async function saveProfile() { await sendUpdate({ description: document.getElementById('edit-desc').value, style: document.getElementById('edit-style').value }); alert('Сохранено'); }
+        async function saveFilters() { await sendUpdate({ search_age_min: parseInt(document.getElementById('filter-min').value), search_age_max: parseInt(document.getElementById('filter-max').value), search_gender: document.getElementById('filter-gender').value }); switchPage('search'); loadFeed(); }
+        async function saveSetting(key, val) { let obj = {}; obj[key] = val; await sendUpdate(obj); }
+        async function sendUpdate(fields) { await fetch(`${API_BASE}/api/update`, { method: 'POST', body: JSON.stringify({tg_id: user.id, fields: fields}) }); }
         async function loadChats() {
-            const c = document.getElementById('chats-list');
-            c.innerHTML = '<div class="text-center text-gray-500">Загрузка...</div>';
+            const c = document.getElementById('chats-list'); c.innerHTML = '<div class="text-center text-gray-500">Загрузка...</div>';
             try {
                 const res = await fetch(`${API_BASE}/api/chats`, { method: 'POST', body: JSON.stringify({tg_id: user.id}) });
                 const d = await res.json();
                 c.innerHTML = '';
-                if(d.chats && d.chats.length > 0) {
-                    d.chats.forEach(chat => {
-                        c.innerHTML += `
-                            <div class="bg-[#1a1a1a] p-3 rounded-lg flex items-center gap-3">
-                                <div class="w-10 h-10 bg-violet-500 rounded-full flex items-center justify-center font-bold">${chat.name[0]}</div>
-                                <div>
-                                    <div class="font-bold">${chat.name}, ${chat.age}</div>
-                                    <div class="text-xs text-green-500">Активный диалог</div>
-                                </div>
-                                <button class="ml-auto bg-violet-600 px-3 py-1 rounded text-xs" onclick="tg.close()">В бота</button>
-                            </div>
-                        `;
-                    });
-                } else {
-                    c.innerHTML = '<div class="text-center text-gray-500 mt-10">Нет активных диалогов</div>';
-                }
-            } catch(e) { c.innerHTML = 'Error'; }
+                if(d.chats && d.chats.length > 0) d.chats.forEach(chat => { c.innerHTML += `<div class="bg-[#1a1a1a] p-3 rounded-lg flex items-center gap-3"><div class="w-10 h-10 bg-violet-500 rounded-full flex items-center justify-center font-bold">${chat.name[0]}</div><div><div class="font-bold">${chat.name}, ${chat.age}</div><div class="text-xs text-green-500">Активный диалог</div></div><button class="ml-auto bg-violet-600 px-3 py-1 rounded text-xs" onclick="tg.close()">В бота</button></div>`; });
+                else c.innerHTML = '<div class="text-center text-gray-500 mt-10">Нет диалогов</div>';
+            } catch(e) { c.innerHTML = 'Ошибка'; }
         }
-
-        // --- NAV ---
         function switchPage(id) {
             document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
-
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); // Reset icon colors if needed
-
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             if(id === 'chat') loadChats();
         }
-
         init();
     </script>
 </body>
