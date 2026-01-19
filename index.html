@@ -8,245 +8,165 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* НЕОНОВЫЙ СТИЛЬ (NEON OBSIDIAN) - Уникальность */
-        :root {
-            --bg-color: #050505;
-            --card-bg: #121212;
-            --primary: #8b5cf6; /* Violet */
-            --accent: #d946ef; /* Pink */
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
-        }
-        body { background-color: var(--bg-color); color: white; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
-
-        /* Ровная верстка */
-        .glass-panel {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-        }
-
-        /* Карточки свайпов */
+        :root { --bg: #050505; --card: #121212; --primary: #8b5cf6; --glass: rgba(255,255,255,0.05); }
+        body { background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; }
+        .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; }
+        .tinder-card { position: absolute; width: 100%; height: 100%; background: var(--card); border-radius: 24px; overflow: hidden; transition: 0.4s; }
         .card-container { position: relative; width: 100%; height: 60vh; perspective: 1000px; margin-top: 10px; }
-        .tinder-card {
-            position: absolute; width: 100%; height: 100%;
-            background-color: var(--card-bg);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            transform-origin: 50% 100%;
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s;
-            border: 1px solid #333;
-        }
-        .card-img { width: 100%; height: 100%; object-fit: cover; }
-        .card-info {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to top, #000 10%, transparent 100%);
-            padding: 24px;
-            padding-bottom: 30px;
-        }
-
-        /* Навигация */
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 70px;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid #222;
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 50;
-            padding-bottom: 10px;
-        }
-        .nav-btn { color: #666; transition: 0.3s; display: flex; flex-col: column; align-items: center; }
-        .nav-btn.active { color: var(--primary); transform: scale(1.1); }
-        .nav-icon { font-size: 20px; margin-bottom: 4px; }
-        .nav-label { font-size: 10px; font-weight: bold; text-transform: uppercase; }
-
-        /* Кнопки действий */
-        .action-btn {
-            width: 60px; height: 60px; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 24px; transition: 0.2s;
-            background: #1a1a1a; border: 1px solid #333;
-        }
-        .action-btn:active { transform: scale(0.9); }
-        .btn-dislike { color: #ef4444; }
-        .btn-like { color: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
-        .btn-super { color: #3b82f6; width: 45px; height: 45px; font-size: 18px; }
-
-        /* Вкладки */
-        .page { display: none; padding: 20px; padding-bottom: 100px; height: 100vh; overflow-y: auto; }
-        .page.active { display: block; animation: fadeUp 0.3s forwards; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Профиль */
-        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 24px; }
-        .avatar-ring {
-            width: 110px; height: 110px; border-radius: 50%;
-            padding: 3px; background: linear-gradient(45deg, var(--primary), var(--accent));
-            margin-bottom: 12px;
-        }
-        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--bg-color); }
-
-        .stat-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; }
-        .stat-num { font-size: 18px; font-weight: 800; color: white; }
-        .stat-label { font-size: 10px; color: #888; font-weight: 700; letter-spacing: 1px; margin-top: 4px; }
-
-        .menu-btn {
-            width: 100%; padding: 16px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            color: white; font-weight: 500;
-        }
+        .page { display: none; padding: 20px; height: 100vh; }
+        .page.active { display: block; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
     </style>
 </head>
 <body>
+    <div id="loader" class="fixed inset-0 bg-[#050505] z-50 flex justify-center items-center"><div class="text-violet-500 font-bold text-2xl animate-pulse">Connecting...</div></div>
 
-    <div id="tab-search" class="page active" style="overflow: hidden;">
-        <div class="flex justify-between items-center px-2 py-2">
-            <span class="text-xl font-bold tracking-tight">Acloin <span class="text-violet-500">App</span></span>
-            <div class="glass-panel px-3 py-1 flex items-center gap-2">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-xs font-bold text-gray-300">LIVE</span>
-            </div>
-        </div>
+    <div id="setup-modal" class="fixed inset-0 bg-[#050505] z-50 flex flex-col justify-center items-center p-6 hidden">
+        <h2 class="text-xl font-bold mb-4">Настройка соединения</h2>
+        <p class="text-sm text-gray-400 mb-4 text-center">Введите ссылку из Ngrok (Forwarding URL), чтобы сайт увидел бота.</p>
+        <input type="text" id="api-url-input" placeholder="https://xxxx-xx.ngrok-free.app" class="w-full p-3 bg-[#1a1a1a] rounded-lg mb-4 text-white">
+        <button onclick="saveApiUrl()" class="w-full p-3 bg-violet-600 rounded-lg font-bold">Подключить</button>
+    </div>
 
+    <div id="tab-search" class="page active">
+        <div class="flex justify-between items-center mb-4"><span class="font-bold text-xl">Acloin</span><span class="text-violet-400 font-bold text-xs border border-violet-800 px-2 py-1 rounded">BETA</span></div>
         <div class="card-container" id="card-stack">
-            <div class="flex flex-col items-center justify-center h-full text-gray-500">
-                <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                <p>Загрузка анкет...</p>
-            </div>
+            <div class="flex flex-col items-center justify-center h-full text-gray-500"><i class="fa-solid fa-spinner fa-spin mb-2"></i><p>Поиск...</p></div>
         </div>
-
-        <div class="flex justify-center items-center gap-6 mt-6">
-            <button onclick="vote(false)" class="action-btn btn-dislike"><i class="fa-solid fa-xmark"></i></button>
-            <button class="action-btn btn-super"><i class="fa-solid fa-star"></i></button>
-            <button onclick="vote(true)" class="action-btn btn-like"><i class="fa-solid fa-heart"></i></button>
+        <div class="flex justify-center gap-6 mt-6">
+            <button onclick="vote('dislike')" class="w-14 h-14 rounded-full bg-[#1a1a1a] text-red-500 text-2xl border border-red-900/30"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="vote('like')" class="w-14 h-14 rounded-full bg-[#1a1a1a] text-green-500 text-2xl border border-green-900/30"><i class="fa-solid fa-heart"></i></button>
         </div>
     </div>
 
     <div id="tab-profile" class="page">
-        <div class="profile-header">
-            <div class="avatar-ring">
-                <img id="my-avatar" src="" class="avatar-img" onerror="this.src='https://via.placeholder.com/150'">
+        <div class="flex flex-col items-center pt-4">
+            <img id="my-avatar" src="" class="w-24 h-24 rounded-full border-4 border-[#050505] mb-2 object-cover">
+            <h1 id="my-name" class="text-2xl font-bold">...</h1>
+            <div class="glass w-full p-4 mt-6 flex justify-between items-center" onclick="tg.close()">
+                <span>⬅️ Вернуться в чат</span>
             </div>
-            <h1 id="my-name" class="text-2xl font-bold">Загрузка...</h1>
-            <p id="my-id" class="text-sm text-gray-500 mt-1">ID: ...</p>
-        </div>
-
-        <div class="glass-panel grid grid-cols-3 gap-0 mb-6 divide-x divide-gray-800">
-            <div class="stat-box">
-                <span class="stat-num text-yellow-400">1</span>
-                <span class="stat-label">РЕЙТИНГ</span>
+            <div class="glass w-full p-4 mt-2 flex justify-between items-center" onclick="resetApi()">
+                <span class="text-red-400">🔌 Сбросить подключение</span>
             </div>
-            <div class="stat-box">
-                <span class="stat-num text-red-500">0</span>
-                <span class="stat-label">ЛАЙКИ</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-num text-blue-500">0</span>
-                <span class="stat-label">ПАРЫ</span>
-            </div>
-        </div>
-
-        <div class="space-y-3">
-            <button class="glass-panel menu-btn" onclick="alert('Редактирование доступно через бота')">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center text-violet-400"><i class="fa-solid fa-pen"></i></div>
-                    <span>Изменить анкету</span>
-                </div>
-                <i class="fa-solid fa-chevron-right text-gray-600"></i>
-            </button>
-
-            <button class="glass-panel menu-btn" onclick="switchPage('search')">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400"><i class="fa-solid fa-fire"></i></div>
-                    <span>Вернуться к поиску</span>
-                </div>
-                <i class="fa-solid fa-chevron-right text-gray-600"></i>
-            </button>
-        </div>
-    </div>
-
-    <div id="tab-chat" class="page">
-        <h2 class="text-2xl font-bold mb-4 px-2">Сообщения</h2>
-        <div class="flex flex-col items-center justify-center h-64 text-center opacity-50">
-            <i class="fa-regular fa-paper-plane text-4xl mb-4"></i>
-            <p>Здесь будут ваши диалоги</p>
         </div>
     </div>
 
     <div class="nav-bar">
-        <button class="nav-btn" onclick="switchPage('profile')" id="btn-profile">
-            <i class="fa-regular fa-user nav-icon"></i>
-            <span class="nav-label">Профиль</span>
-        </button>
-        <button class="nav-btn active" onclick="switchPage('search')" id="btn-search">
-            <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-full flex items-center justify-center -mt-6 border-4 border-[#050505] shadow-lg shadow-violet-900/50">
-                <i class="fa-solid fa-layer-group text-white"></i>
-            </div>
-        </button>
-        <button class="nav-btn" onclick="switchPage('chat')" id="btn-chat">
-            <i class="fa-regular fa-comment-dots nav-icon"></i>
-            <span class="nav-label">Чаты</span>
-        </button>
+        <button onclick="switchTab('profile')" class="text-gray-500"><i class="fa-regular fa-user text-xl"></i></button>
+        <button onclick="switchTab('search')" class="text-violet-500"><div class="w-12 h-12 bg-violet-600 rounded-full flex items-center justify-center -mt-6 border-4 border-[#050505]"><i class="fa-solid fa-fire text-white"></i></div></button>
+        <button class="text-gray-500"><i class="fa-regular fa-comment text-xl"></i></button>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        const tg = window.Telegram.WebApp; tg.expand();
         const user = tg.initDataUnsafe.user;
+        let API_URL = localStorage.getItem('api_url');
+        let profiles = [];
+        let currentIdx = 0;
 
-        // ДАННЫЕ ПРОФИЛЯ
-        if(user) {
-            document.getElementById('my-name').innerText = user.first_name;
-            document.getElementById('my-id').innerText = `@${user.username || user.id}`;
-            if(user.photo_url) document.getElementById('my-avatar').src = user.photo_url;
+        function init() {
+            if(!API_URL) {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('setup-modal').classList.remove('hidden');
+            } else {
+                document.getElementById('loader').classList.add('hidden');
+                loadMe();
+                loadFeed();
+            }
         }
 
-        // ДЕМО-ДАННЫЕ (Так как нет API, используем красивые заглушки для теста дизайна)
-        const profiles = [
-            { name: "Алиса", age: 20, style: "Goth", city: "Moscow", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&q=80" },
-            { name: "Ник", age: 23, style: "Skater", city: "Kyiv", img: "https://images.unsplash.com/photo-1520975661595-6453be3f7070?w=600&q=80" },
-            { name: "Ева", age: 19, style: "Alt", city: "Minsk", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80" }
-        ];
-        let currentIdx = 0;
+        function saveApiUrl() {
+            const url = document.getElementById('api-url-input').value.trim();
+            if(url) {
+                localStorage.setItem('api_url', url.replace(/\/$/, "")); // убираем слеш в конце
+                API_URL = url;
+                document.getElementById('setup-modal').classList.add('hidden');
+                loadMe();
+                loadFeed();
+            }
+        }
+
+        function resetApi() {
+            localStorage.removeItem('api_url');
+            location.reload();
+        }
+
+        async function loadMe() {
+            if(!user) return;
+            try {
+                const res = await fetch(`${API_URL}/api/me`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tg_id: user.id})
+                });
+                const data = await res.json();
+                if(data.user) {
+                    document.getElementById('my-name').innerText = data.user.name + ", " + data.user.age;
+                    if(user.photo_url) document.getElementById('my-avatar').src = user.photo_url;
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadFeed() {
+            if(!user) return;
+            try {
+                const res = await fetch(`${API_URL}/api/feed`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tg_id: user.id})
+                });
+                const data = await res.json();
+                if(data.profiles) {
+                    profiles = data.profiles;
+                    currentIdx = 0;
+                    renderCard();
+                }
+            } catch(e) {
+                document.getElementById('card-stack').innerHTML = `<div class='text-center text-red-500'>Ошибка соединения с ботом.<br>Проверь Ngrok.</div>`;
+            }
+        }
 
         function renderCard() {
             const stack = document.getElementById('card-stack');
             stack.innerHTML = '';
-
             if(currentIdx >= profiles.length) {
-                stack.innerHTML = `<div class="flex flex-col items-center justify-center h-full"><h3 class="text-xl font-bold">На сегодня всё</h3><button class="mt-4 px-4 py-2 bg-white/10 rounded-lg" onclick="location.reload()">Обновить</button></div>`;
+                stack.innerHTML = `<div class='text-center text-gray-500 mt-20'>Анкеты закончились</div>`;
                 return;
             }
-
             const p = profiles[currentIdx];
-            const card = document.createElement('div');
-            card.className = 'tinder-card';
-            card.style.backgroundImage = `url(${p.img})`;
-            card.style.backgroundSize = 'cover';
-            card.innerHTML = `
-                <div class="card-info">
-                    <h2 class="text-3xl font-bold mb-1">${p.name}, ${p.age}</h2>
-                    <div class="flex items-center gap-2">
-                        <span class="px-2 py-1 bg-violet-600 rounded text-xs font-bold uppercase">${p.style}</span>
-                        <span class="text-sm opacity-80"><i class="fa-solid fa-location-dot"></i> ${p.city}</span>
+            // Используем плейсхолдер, если нет фото
+            const img = p.avatar_url || 'https://via.placeholder.com/400x600?text=No+Photo';
+
+            stack.innerHTML = `
+                <div class="tinder-card" style="background-image: url('${img}'); background-size: cover;">
+                    <div class="absolute bottom-0 w-full p-5 bg-gradient-to-t from-black to-transparent">
+                        <h2 class="text-3xl font-bold">${p.name}, ${p.age}</h2>
+                        <span class="bg-violet-600 px-2 py-1 rounded text-xs font-bold uppercase">${p.style}</span>
+                        <p class="text-gray-300 text-sm mt-1">📍 ${p.city}</p>
+                        ${p.description ? `<p class="text-gray-400 text-xs mt-1 line-clamp-2">${p.description}</p>` : ''}
                     </div>
-                </div>
-            `;
-            stack.appendChild(card);
+                </div>`;
         }
 
-        function vote(like) {
+        async function vote(action) {
             const card = document.querySelector('.tinder-card');
             if(!card) return;
+            const p = profiles[currentIdx];
 
-            const rotate = like ? 15 : -15;
-            const x = like ? 200 : -200;
+            // UI Animation
+            const x = action === 'like' ? 200 : -200;
+            card.style.transform = `translateX(${x}%) rotate(${x/10}deg)`;
+            card.style.opacity = 0;
 
-            card.style.transform = `translateX(${x}%) rotate(${rotate}deg)`;
-            card.style.opacity = '0';
+            // API Call
+            try {
+                await fetch(`${API_URL}/api/action`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({from_id: user.id, to_id: p.tg_id, action: action})
+                });
+            } catch(e) { console.error(e); }
 
             setTimeout(() => {
                 currentIdx++;
@@ -254,17 +174,12 @@
             }, 300);
         }
 
-        function switchPage(id) {
+        function switchTab(id) {
             document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + id).classList.add('active');
-
-            // Обновляем иконки навигации
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('btn-' + id).classList.add('active');
         }
 
-        // Старт
-        renderCard();
+        init();
     </script>
 </body>
 </html>
